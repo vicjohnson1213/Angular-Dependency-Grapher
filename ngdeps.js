@@ -5,7 +5,8 @@ const testDir = 'test';
 
 walk(path.join(__dirname, testDir))
     .then(res => {
-        console.log(JSON.stringify(res, ' ', 4));
+
+        console.log(JSON.stringify({ name: 'root', children: res }, ' ', 4));
     });
 
 async function walk(dir, currentDir = '') {
@@ -19,11 +20,12 @@ async function walk(dir, currentDir = '') {
             return { name: file, children: kiddos };
         } else if (stats.isFile()) {
             const importsExports = await getImportsExports(filepath);
+
             return {
                 name: file,
                 path: path.join(currentDir, file),
-                imports: importsExports.imports,
-                exports: importsExports.exports
+                importedClasses: importsExports.imports,
+                exportedClasses: importsExports.exports
             };
         }
     }));
