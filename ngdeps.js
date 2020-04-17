@@ -16,13 +16,15 @@ async function walk(dir, currentDir = '') {
         const stats = await fs.stat(filepath);
 
         if (stats.isDirectory()) {
-            const kiddos = await walk(filepath, path.join(currentDir, file));
-            return { name: file, children: kiddos };
+            let kiddos = await walk(filepath, path.join(currentDir, file))
+            kiddos = kiddos.filter(k => k.type === 'ts' || k.type === 'dir');
+            return { name: file, type: 'dir', children: kiddos };
         } else if (stats.isFile()) {
             const importsExports = await getImportsExports(filepath);
 
             return {
                 name: file,
+                type: file.split('.').pop(),
                 path: path.join(currentDir, file),
                 importedClasses: importsExports.imports,
                 exportedClasses: importsExports.exports

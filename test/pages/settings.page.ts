@@ -1,3 +1,3 @@
 export class SettingsPage {
-    constructor(private something: NothingOfOurs) {}
+    constructor(private something: NothingOfOurs, private set: SettingsProvider) {}
 }
