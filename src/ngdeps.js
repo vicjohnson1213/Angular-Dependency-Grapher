@@ -64,7 +64,14 @@ async function getImportsExports(filepath) {
 
             if (constructorMatches) {
                 const params = constructorMatches[1].split(',');
-                imports = params.map(param => param.split(':')[1].trim());
+                imports = params.map(param => {
+                    const split = param.split(':');
+                    if (!!split[1]) {
+                        split[1].trim();
+                    }
+
+                    return null;
+                }).filter(p => !!p);
             }
 
             return { exports: exports, imports: imports };
