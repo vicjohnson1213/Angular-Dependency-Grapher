@@ -1,8 +1,8 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-async function generateDependencyGraph(srcDir) {
-    return walk(srcDir);
+async function generateDependencyGraph(srcDir, ignoreEmpty) {
+    return walk(srcDir, ignoreEmpty);
 }
 
 async function outputResults(outputDir, data) {
@@ -20,22 +20,31 @@ module.exports = {
     outputResults: outputResults
 };
 
-async function walk(dir, currentDir = '') {
+async function walk(dir, ignoreEmpty = false, currentDir = '') {
     let files = await fs.readdir(dir);
     files = await Promise.all(files.map(async file => {
         const filepath = path.join(dir, file);
         const stats = await fs.stat(filepath);
 
         if (stats.isDirectory()) {
-            let kiddos = await walk(filepath, path.join(currentDir, file))
-            kiddos = kiddos.filter(k => k.type === 'ts' || k.type === 'dir');
-            return { name: file, type: 'dir', children: kiddos };
-        } else if (stats.isFile()) {
-            const importsExports = await getImportsExports(filepath);
+            let kiddos = await walk(filepath, ignoreEmpty, path.join(currentDir, file))
+            kiddos = kiddos
+                .filter(k => k.type === 'ts' || k.type === 'dir');
 
             return {
                 name: file,
-                type: file.split('.').pop(),
+                type: 'dir',
+                ignore: kiddos.length === 0,
+                children: kiddos
+            };
+        } else if (stats.isFile()) {
+            const importsExports = await getImportsExports(filepath);
+            const split = file.split('.');
+            const spec = split[split.length - 2] === 'spec';
+            return {
+                name: file,
+                type: spec ? 'spec' : split[split.length - 1],
+                ignore: ignoreEmpty && importsExports.imports.length === 0,
                 path: path.join(currentDir, file),
                 importedClasses: importsExports.imports,
                 exportedClasses: importsExports.exports
@@ -43,7 +52,9 @@ async function walk(dir, currentDir = '') {
         }
     }));
     
-    return files;
+    return files
+        .filter(f => f.type === 'ts' || f.type === 'dir')
+        .filter(f => !f.ignore);
 }
 
 async function getImportsExports(filepath) {
@@ -67,7 +78,7 @@ async function getImportsExports(filepath) {
                 imports = params.map(param => {
                     const split = param.split(':');
                     if (!!split[1]) {
-                        split[1].trim();
+                        return split[1].trim();
                     }
 
                     return null;

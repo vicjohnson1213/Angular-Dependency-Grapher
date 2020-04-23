@@ -1,5 +1,5 @@
-const radius = 400;
-const width = 800;
+const radius = 500;
+const width = 1000;
 const colorout = "#F42272";
 const colorin = "#001F54";
 const colornone = "#ccc";
@@ -95,14 +95,16 @@ function id(node) {
 }
 
 function color(leaf) {
-    if (leaf.parent.data.name === 'services')
+    if (id(leaf).includes('.service.ts'))
         return '#3F7D20';
-    if (leaf.parent.data.name === 'stores')
+    if (id(leaf).includes('.store.ts'))
         return '#3185FC';
-    if (leaf.parent.data.name === 'providers')
-        return '#BC3908';
+    if (id(leaf).includes('.page.ts'))
+        return '#777';
+    if (id(leaf).includes('.component.ts'))
+        return '#777';
 
-    return '#B74F6F';
+    return '#6E4990';
 }
 
 async function fetchLocal(url) {

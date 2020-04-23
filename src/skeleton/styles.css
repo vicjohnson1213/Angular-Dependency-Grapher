@@ -2,12 +2,7 @@
     box-sizing: border-box;
 }
 
-html, body {
-    /* height: 100%; */
-}
-
 #chart {
     margin: auto;
-    width: 80%;
-    max-width: 900px;
+    width: 90%;
 }
