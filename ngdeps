@@ -3,14 +3,21 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-console.log(process.argv);
-const testDir = 'test';
+const target = process.argv[2] || 'src';
+const outputDir = process.argv[3];
 
-walk(path.join(__dirname, testDir))
-    .then(res => {
+walk(path.join(__dirname, target))
+    .then(res => writeResults(res));
 
-        console.log(JSON.stringify({ name: 'root', children: res }, ' ', 4));
-    });
+async function writeResults(data) {
+    await fs.mkdir(outputDir, { recursive: true });
+    await fs.copyFile(path.join(__dirname, 'skeleton', 'index.html'), path.join(outputDir, 'index.html'));
+    await fs.copyFile(path.join(__dirname, 'skeleton', 'main.js'), path.join(outputDir, 'main.js'));
+    await fs.copyFile(path.join(__dirname, 'skeleton', 'styles.css'), path.join(outputDir, 'styles.css'));
+
+    data = JSON.stringify({ name: 'root', children: data }, ' ', 4);
+    await fs.writeFile(path.join(outputDir, 'data.json'), data);
+}
 
 async function walk(dir, currentDir = '') {
     let files = await fs.readdir(dir);
