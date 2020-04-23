@@ -1,0 +1,28 @@
+{
+    "name": "ng-deps",
+    "version": "1.0.0",
+    "description": "A command line utility to generate a dependency graph for an Angular project",
+    "main": "index.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vicjohnson1213/Angular-Dependency-Grapher.git"
+    },
+    "author": "Victor Johnson <vicjohnson1213@gmail.com",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/vicjohnson1213/Angular-Dependency-Grapher/issues"
+    },
+    "homepage": "https://github.com/vicjohnson1213/Angular-Dependency-Grapher#readme",
+    "dependencies": {
+        "commander": "^5.0.0"
+    },
+    "bin": {
+        "ngdeps": "./src/index.js"
+    }
+}

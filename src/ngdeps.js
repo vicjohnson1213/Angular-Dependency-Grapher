@@ -1,16 +1,24 @@
-#!/usr/bin/env node
-
 const fs = require('fs').promises;
 const path = require('path');
 
-console.log(process.argv);
-const testDir = 'test';
+async function generateDependencyGraph(srcDir) {
+    return walk(srcDir);
+}
 
-walk(path.join(__dirname, testDir))
-    .then(res => {
+async function outputResults(outputDir, data) {
+    await fs.mkdir(outputDir, { recursive: true });
+    await fs.copyFile(path.join(__dirname, 'skeleton', 'index.html'), path.join(outputDir, 'index.html'));
+    await fs.copyFile(path.join(__dirname, 'skeleton', 'main.js'), path.join(outputDir, 'main.js'));
+    await fs.copyFile(path.join(__dirname, 'skeleton', 'styles.css'), path.join(outputDir, 'styles.css'));
 
-        console.log(JSON.stringify({ name: 'root', children: res }, ' ', 4));
-    });
+    data = JSON.stringify({ name: 'root', children: data }, ' ', 4);
+    await fs.writeFile(path.join(outputDir, 'data.json'), data);
+}
+
+module.exports = {
+    generateDependencyGraph: generateDependencyGraph,
+    outputResults: outputResults
+};
 
 async function walk(dir, currentDir = '') {
     let files = await fs.readdir(dir);
