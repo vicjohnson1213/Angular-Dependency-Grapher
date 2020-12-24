@@ -7,12 +7,10 @@ async function generateDependencyGraph(srcDir, ignoreEmpty) {
 
 async function outputResults(outputDir, data) {
     await fs.mkdir(outputDir, { recursive: true });
-    await fs.copyFile(path.join(__dirname, 'skeleton', 'index.html'), path.join(outputDir, 'index.html'));
-    await fs.copyFile(path.join(__dirname, 'skeleton', 'main.js'), path.join(outputDir, 'main.js'));
-    await fs.copyFile(path.join(__dirname, 'skeleton', 'styles.css'), path.join(outputDir, 'styles.css'));
-
+    let dataFileContent = await fs.readFile(path.join(__dirname, 'skeleton', 'index.html'), 'utf8');
     data = JSON.stringify({ name: 'root', children: data }, ' ', 4);
-    await fs.writeFile(path.join(outputDir, 'data.json'), data);
+    dataFileContent = dataFileContent.replace('{{dependencyData}}', data);
+    await fs.writeFile(path.join(outputDir, 'index.html'), dataFileContent);
 }
 
 module.exports = {
@@ -51,7 +49,7 @@ async function walk(dir, ignoreEmpty = false, currentDir = '') {
             };
         }
     }));
-    
+
     return files
         .filter(f => f.type === 'ts' || f.type === 'dir')
         .filter(f => !f.ignore);
@@ -68,7 +66,7 @@ async function getImportsExports(filepath) {
 
             const exportMatches = content.match(exportsRe);
             const constructorMatches = content.match(importsRe);
-            
+
             if (exportMatches) {
                 exports = [exportMatches[1]];
             }

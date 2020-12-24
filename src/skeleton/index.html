@@ -7,13 +7,132 @@
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        #chart {
+            margin: auto;
+            width: 90%;
+        }
+    </style>
 </head>
 
 <body>
     <div id="chart"></div>
     <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="main.js"></script>
+
+    <script>
+        const data = {{dependencyData}};
+
+        const radius = 500;
+        const width = 1400;
+        const colorout = "#F42272";
+        const colorin = "#001F54";
+        const colornone = "#ccc";
+
+        tree = d3.cluster().size([2 * Math.PI, radius - 210]);
+        line = d3.lineRadial()
+            .curve(d3.curveBundle.beta(0.8))
+            .radius(d => d.y)
+            .angle(d => d.x);
+
+        generateChart(data);
+
+        function generateChart(data) {
+            const root = tree(bilink(d3.hierarchy(data)));
+
+            const svg = d3.select("#chart")
+                .append('svg')
+                .attr('viewBox', [-width / 2, -width / 2, width, width]);
+
+            const node = svg.append('g')
+                .attr("font-family", "sans-serif")
+                .attr("font-size", 12)
+                .selectAll("g")
+                .data(root.leaves())
+                .join("g")
+                .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
+                .append("text")
+                .attr("dy", "0.31em")
+                .attr("x", d => d.x < Math.PI ? 6 : -6)
+                .attr("text-anchor", d => d.x < Math.PI ? "start" : "end")
+                .attr("transform", d => d.x >= Math.PI ? "rotate(180)" : null)
+                .attr('fill', d => color(d))
+                .text(d => d.parent.data.name + '.' + d.data.name)
+                .each(function (d) { d.text = this; })
+                .on("mouseover", overed)
+                .on("mouseout", outed);
+
+            const link = svg.append("g")
+                .attr("stroke", colornone)
+                .attr("fill", "none")
+                .selectAll("path")
+                .data(root.leaves().flatMap(leaf => leaf.importedBy))
+                .join("path")
+                .style("mix-blend-mode", "multiply")
+                .attr("d", ([i, o]) => line(i.path(o)))
+                .each(function (d) { d.path = this; });
+
+            function overed(d) {
+                link.style("mix-blend-mode", null);
+                d3.select(this).attr("font-weight", "bold");
+                d3.selectAll(d.imports.map(d => d.path)).attr("stroke", colorin).raise();
+                d3.selectAll(d.imports.map(([d]) => d.text)).attr("font-weight", "bold");
+                d3.selectAll(d.importedBy.map(d => d.path)).attr("stroke", colorout).raise();
+                d3.selectAll(d.importedBy.map(([, d]) => d.text)).attr("font-weight", "bold");
+            }
+
+            function outed(d) {
+                link.style("mix-blend-mode", "multiply");
+                d3.select(this).attr("font-weight", null);
+                d3.selectAll(d.imports.map(d => d.path)).attr("stroke", null);
+                d3.selectAll(d.imports.map(([d]) => d.text)).attr("font-weight", null);
+                d3.selectAll(d.importedBy.map(d => d.path)).attr("stroke", null);
+                d3.selectAll(d.importedBy.map(([, d]) => d.text)).attr("font-weight", null);
+            }
+        }
+
+        function bilink(root) {
+            const allExported = {};
+
+            root.leaves().forEach(leaf => {
+                leaf.data.exportedClasses.forEach(c => allExported[c] = leaf);
+            });
+
+            root.leaves().forEach(leaf => {
+                leaf.importedBy = [];
+                leaf.imports = leaf.data.importedClasses
+                    .filter(c => !!allExported[c])
+                    .map(c => [leaf, allExported[c]]);
+            });
+
+            root.leaves().forEach(leaf => {
+                leaf.imports.forEach(i => i[1].importedBy.push(i));
+            });
+
+            return root;
+        }
+
+        function id(node) {
+            return `${node.parent ? id(node.parent) + "." : ""}${node.data.name}`;
+        }
+
+        function color(leaf) {
+            if (id(leaf).includes('.service.ts'))
+                return '#3F7D20';
+            if (id(leaf).includes('.store.ts'))
+                return '#3185FC';
+            if (id(leaf).includes('.page.ts'))
+                return '#777';
+            if (id(leaf).includes('.component.ts'))
+                return '#777';
+
+            return '#6E4990';
+        }
+
+    </script>
 </body>
 
 </html>
